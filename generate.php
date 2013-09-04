@@ -33,10 +33,12 @@ $site = $basesite;
 //若修改.htaccess将域名指向down.php?id=，下面这行可以注释掉。
 $site .= 'down.php?id=';
 
+$backhome = '<a href='.$basesite.'><input class="button" type="button" name="test" value="返回首页"/>';
+
 $panlink = $_POST['panlink'];
 
 if(empty($panlink)){
-  die('<p>请填写分享链接</p><a href='.$basesite.'><input class="button" type="button" name="test" value="返回首页"/></a>');
+  die('<p>请填写分享链接</p></a>'.$backhome);
 }
 
 //由于参数顺序会变化，POST传递过来的参数，正则获取参数值。
@@ -58,6 +60,11 @@ if($dir != '')
 	$dirurl = 'http://pan.baidu.com/share/list?page=1&shareid='.$s.'&uk='.$u.'&dir='.$dir;
 	$pagefile = curlget($dirurl);
 	$jsonobj = json_decode($pagefile);
+	if($jsonobj->errno != 0)
+	{
+		die("<p>分享的文件已经被取消或不存在!</p>".$backhome);
+	}
+
 }
 else
 {
@@ -75,12 +82,18 @@ else
 	
 	$pagefile = curlget($panlink);
 	$re = '/\[\{.*\}\]/';
-	preg_match_all($re,$pagefile,$result);
-	$jsonstr = str_replace('\\\\','$ma^rk$',$result[0][0]);
-	$jsonstr = str_replace('\\','',$jsonstr);
-	$jsonstr = str_replace('$ma^rk$','\\',$jsonstr);
-	$jsonstr = '{"errno":0,"list":'.$jsonstr.'}';
-	$jsonobj = json_decode($jsonstr);
+	if(preg_match_all($re,$pagefile,$result))
+	{
+		$jsonstr = str_replace('\\\\','$ma^rk$',$result[0][0]);
+		$jsonstr = str_replace('\\','',$jsonstr);
+		$jsonstr = str_replace('$ma^rk$','\\',$jsonstr);
+		$jsonstr = '{"errno":0,"list":'.$jsonstr.'}';
+		$jsonobj = json_decode($jsonstr);
+	}
+	else
+	{
+		die("<p>分享的文件已经被取消或不存在!</p>".$backhome);
+	}
 }
 
 $obj = $jsonobj->list;
@@ -137,6 +150,6 @@ function curlget($url)
 }
 
 ?>
-<a href="<?php echo $basesite ?>"><input class="button" type="button" name="test" value="返回首页"/></a>
+<?php echo $backhome ?>
 </body>
 </html>
