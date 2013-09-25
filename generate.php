@@ -41,18 +41,34 @@ if(empty($panlink)){
   die('<p>请填写分享链接</p></a>'.$backhome);
 }
 
-//由于参数顺序会变化，POST传递过来的参数，正则获取参数值。
+/*由于参数顺序会变化，POST传递过来的参数，正则获取参数值。------旧版
 $panidre = '/shareid=(?<shareid>\d+)|uk=(?<uk>\d+)|fid=(?<fid>\d+)|dir\/path=(?<dir>.*)/';
 preg_match_all($panidre,$panlink,$panid);
 $s = implode("",$panid['shareid']);
 $u = implode("",$panid['uk']);
 $f = implode("",$panid['fid']);
 $dir = implode("",$panid['dir']);
+*/
 
+//新版短链接
+$sharepage = curlget($panlink);
+$sharepagere = '/FileUtils\.share_id="(?<shareid>\d+)"|FileUtils\.share_uk="(?<uk>\d+)"/';
+preg_match_all($sharepagere,$sharepage,$panid);
+$s = implode("",$panid['shareid']);
+$u = implode("",$panid['uk']);
 
-if($dir != '')
-{
+//判断文件夹
+$dirnum = strpos($panlink, '#dir/path=');
+if($dirnum) {
+	$dir = substr($panlink, $dirnum+10);
 	$isdir = true;
+} else {
+	$isdir = false;
+}
+
+
+if($isdir)
+{
 	//$dirbaselink = substr($panlink,0,$dirbaselinknum+10);
 	
 	$linkid = 's'.$s.'u'.$u.'d'.$dir;
@@ -69,18 +85,13 @@ if($dir != '')
 else
 {
 	$linkid = 's'.$s.'u'.$u;
-	if($f != '')
-	{
-		$linkid .= 'f'.$f;
-	}
-	$isdir = false;
 	
 	if(strpos($panlink,'#dir'))
 	{
 		$panlink = str_replace('#dir','',$panlink);
 	}
 	
-	$pagefile = curlget($panlink);
+	$pagefile = $sharepage;
 	$re = '/\[\{.*\}\]/';
 	if(preg_match_all($re,$pagefile,$result))
 	{
