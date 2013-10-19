@@ -48,8 +48,7 @@ class BaiduMini {
 		} else {
 			$this->getPublicDlink();
 		}
-		echo $this->dlink;
-		//header('Location: '.$this->dlink);
+		header('Location: '.$this->dlink);
 	}
 
 	public function downPrivateFile() {
